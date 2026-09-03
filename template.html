@@ -69,10 +69,9 @@
         {{CONTENT}}
     </div>
 
-    <!-- Hidden Redirection Security Engine -->
+    <!-- Hidden Link Execution Engine -->
     <script>
         function openSecureLink(encodedUrl) {
-            // Decodes URL dynamically at runtime only when button is clicked
             let realUrl = atob(encodedUrl);
             window.open(realUrl, '_blank');
         }
