@@ -1,0 +1,73 @@
+name: Deploy Obfuscated Engine Pages
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: 'pages'
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Process Python Files
+        run: |
+          mkdir -p build
+          python -c '
+          import os, glob, importlib.util
+
+          with open("template.html", "r", encoding="utf-8") as f:
+              template = f.read()
+
+          py_files = glob.glob("*.py")
+
+          for py_file in py_files:
+              module_name = py_file.replace(".py", "")
+              
+              try:
+                  spec = importlib.util.spec_from_file_location(module_name, py_file)
+                  mod = importlib.util.module_from_spec(spec)
+                  spec.loader.exec_module(mod)
+                  
+                  if hasattr(mod, "run"):
+                      content = mod.run()
+                  else:
+                      content = f"<h1>Module {py_file}</h1><p>No run() function defined.</p>"
+              except Exception as err:
+                  content = f"<h1 style=\"color:#ff4444;\">Execution Error</h1><p>{err}</p>"
+
+              rendered_html = template.replace("{{TITLE}}", module_name.upper()).replace("{{CONTENT}}", str(content))
+
+              out_file = f"build/{py_file}.html"
+              with open(out_file, "w", encoding="utf-8") as f:
+                  f.write(rendered_html)
+
+              if py_file == "main.py":
+                  with open("build/index.html", "w", encoding="utf-8") as f:
+                      f.write(rendered_html)
+          '
+
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'build'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
