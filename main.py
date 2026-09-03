@@ -7,7 +7,7 @@ def create_hidden_button(button_text, secret_url):
     '''
 
 def run():
-    # Secret links (Python file ke andar encapsulated)
+    # Secret URLs Encapsulated in Python
     link_appstore = "https://sites.google.com/view/nexura-app-store/home"
     link_official = "https://sites.google.com/view/nexura-mt/home"
 
@@ -16,28 +16,52 @@ def run():
 
     profile_img = "https://yt3.ggpht.com/CRdTHCDMWDNbc75cMKKKoII4H_7L6kPB2gRcErgF1IBc7-7uat6PU7BhqaagjgPNUMODFGxudm2A_6s=s953-c-fcrop64=1,13160000ece9ffff-rw-nd-v1"
 
-    return f"""
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="google-site-verification" content="1NRG9AxOq3yo2406lyqzessDKTQD1ikumDe8GtKsUpg" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXURA | Muhammad Taqi</title>
+    <link rel="icon" href="{profile_img}">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700&display=swap');
+        :root {{ --neon-blue: #00f2ff; --bg: #050505; --glass: rgba(255, 255, 255, 0.05); }}
+        body {{ margin: 0; background: var(--bg); color: white; font-family: 'Outfit', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; box-sizing: border-box; }}
+        .card {{ background: var(--glass); backdrop-filter: blur(20px); border: 1px solid var(--neon-blue); padding: 40px; border-radius: 30px; text-align: center; max-width: 500px; width: 100%; box-shadow: 0 10px 40px rgba(0, 242, 255, 0.15); }}
+        .image-frame {{ width: 150px; height: 150px; border-radius: 50%; border: 3px solid var(--neon-blue); margin: 0 auto 20px auto; overflow: hidden; box-shadow: 0 0 20px var(--neon-blue); }}
+        .image-frame img {{ width: 100%; height: 100%; object-fit: cover; }}
+        h1 {{ margin: 0; color: var(--neon-blue); font-size: 2.5rem; }}
+        h2 {{ font-weight: 300; font-size: 1rem; opacity: 0.8; margin-bottom: 20px; }}
+        .role-box {{ background: rgba(0,0,0,0.4); padding: 15px; border-radius: 15px; margin-bottom: 25px; font-size: 0.9rem; line-height: 1.6; }}
+        .btn {{ display: block; width: 100%; padding: 15px; background: var(--neon-blue); color: black; border-radius: 10px; font-weight: 700; text-decoration: none; margin-bottom: 10px; transition: 0.3s; border: none; cursor: pointer; text-align: center; font-size: 1rem; }}
+        .btn:hover {{ transform: scale(1.02); box-shadow: 0 0 20px var(--neon-blue); }}
+        #voice-status {{ margin-top: 15px; font-size: 0.8rem; color: var(--neon-blue); height: 20px; }}
+    </style>
+</head>
+<body>
     <div class="card">
         <div class="image-frame">
             <img src="{profile_img}" alt="Muhammad Taqi">
         </div>
-        
         <h1>NEXURA</h1>
         <h2>Muhammad Taqi</h2>
-        
         <div class="role-box">
             Full Stack Web & AI Developer<br>
             Software Architect & Engineer<br>
             Python & React Programmer
         </div>
-
         {btn_appstore}
         {btn_official}
-
         <div id="voice-status"></div>
     </div>
 
     <script>
+        function openSecureLink(encodedUrl) {{
+            let realUrl = atob(encodedUrl);
+            window.open(realUrl, '_blank');
+        }}
+
         function startVoice() {{
             const status = document.getElementById('voice-status');
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -58,4 +82,6 @@ def run():
             recognition.start();
         }}
     </script>
-    """
+</body>
+</html>
+"""
