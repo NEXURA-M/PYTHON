@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi Python Runner</title>
+
+    <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css">
+    <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+
+    <py-config>
+        files = ["main.py", "app.py", "taqi.py", "index_script.py"]
+    </py-config>
+</head>
+<body>
+    <h1>Multiple Python Files Runner</h1>
+
+    <button onclick="runScript('main')">Run main.py</button>
+    <button onclick="runScript('app')">Run app.py</button>
+    <button onclick="runScript('taqi')">Run taqi.py</button>
+    <button onclick="runScript('index_script')">Run index_script.py</button>
+
+    <h3>Output:</h3>
+    <pre id="output">Click any button to run python script...</pre>
+
+    <script>
+        function runScript(fileName) {
+            document.getElementById('output').innerText = "Running " + fileName + ".py ...";
+            
+            // PyScript/Pyodide execution call
+            if (window.pyscript) {
+                pyscript.interpreter.runPython(`
+                    import importlib
+                    import sys
+                    import ${fileName}
+                    
+                    # File reload agar pehle se imported ho
+                    importlib.reload(${fileName})
+                    
+                    # Function execute karo
+                    result = ${fileName}.run()
+                    
+                    from js import document
+                    document.getElementById('output').innerText = str(result)
+                `);
+            }
+        }
+    </script>
+</body>
+</html>
