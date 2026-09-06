@@ -3,15 +3,14 @@ name: Build and Deploy
 on:
   push:
     branches:
-      - main  # Agar aapki main branch 'master' hai toh yahan 'master' kar dein
+      - main  # Agar aapki default branch 'master' hai toh yahan 'master' kar dein
 
-# GitHub Actions bot ko Pages par write/deploy karne ki permissions
+# GitHub Actions bot ko Pages deploy karne ki permissions
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Dynamic deployments ko cancel karein agar fast pushes hon
 concurrency:
   group: "pages"
   cancel-in-progress: true
@@ -27,14 +26,20 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Process .mt file to .js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Obfuscate and Process .mt file
         run: |
-          # Check agar script.mt exist karti hai aur use script.js banayein
+          npm install -g javascript-obfuscator
           if [ -f "script.mt" ]; then
-            cp script.mt script.js
-            echo "Successfully converted script.mt to script.js"
+            javascript-obfuscator script.mt --output script.js --compact true --self-defending true
+            echo "Successfully obfuscated script.mt into script.js"
           else
-            echo "Warning: script.mt file not found!"
+            echo "Error: script.mt file not found!"
+            exit 1
           fi
 
       - name: Setup Pages
@@ -43,7 +48,6 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Entire repository root deploy hogi
           path: '.'
 
       - name: Deploy to GitHub Pages
