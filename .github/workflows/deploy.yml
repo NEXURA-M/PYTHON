@@ -3,22 +3,49 @@ name: Build and Deploy
 on:
   push:
     branches:
-      - main  # Ya aapki default branch ka naam
+      - main  # Agar aapki main branch 'master' hai toh yahan 'master' kar dein
+
+# GitHub Actions bot ko Pages par write/deploy karne ki permissions
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Dynamic deployments ko cancel karein agar fast pushes hon
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
 
 jobs:
   build-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
       - name: Process .mt file to .js
         run: |
-          # script.mt ko copy karke script.js bana do
-          cp script.mt script.js
+          # Check agar script.mt exist karti hai aur use script.js banayein
+          if [ -f "script.mt" ]; then
+            cp script.mt script.js
+            echo "Successfully converted script.mt to script.js"
+          else
+            echo "Warning: script.mt file not found!"
+          fi
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Entire repository root deploy hogi
+          path: '.'
 
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: .
+        id: deployment
+        uses: actions/deploy-pages@v4
