@@ -2,7 +2,7 @@ from flask import Flask, render_template_string
 
 app = Flask(__name__)
 
-# Main HTML jisme sirf title hoga (CTRL + U par sirf yeh dikhega)
+# Main HTML (View Source / CTRL + U par sirf yeh dikhega)
 MAIN_HTML = """<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -27,94 +27,133 @@ MAIN_HTML = """<!DOCTYPE html>
 </body>
 </html>"""
 
-# Backend UI Component (CSS + HTML layout)
+# Backend UI Component (Aapka Diya Gaya Template & Style Injection)
 BACKEND_UI_COMPONENT = """<style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700&display=swap');
+
+    :root {
+        --neon-blue: #00f2ff;
+        --bg: #050505;
+        --glass: rgba(255, 255, 255, 0.05);
+    }
+
     * {
         margin: 0;
         padding: 0;
         box-sizing: border-box;
-        font-family: 'Poppins', system-ui, -apple-system, sans-serif;
     }
 
     .ui-wrapper {
-        min-height: 100vh;
+        margin: 0;
+        background: var(--bg);
+        color: white;
+        font-family: 'Outfit', sans-serif;
         display: flex;
         justify-content: center;
         align-items: center;
-        background: radial-gradient(circle at center, #1a0b2e, #090014);
-        color: #ffffff;
+        min-height: 100vh;
+        padding: 20px;
     }
 
     .card {
+        background: var(--glass);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--neon-blue);
+        padding: 40px;
+        border-radius: 30px;
         text-align: center;
-        padding: 50px 40px;
-        background: rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(15px);
-        -webkit-backdrop-filter: blur(15px);
-        border-radius: 24px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-        max-width: 450px;
-        width: 90%;
+        max-width: 500px;
+        width: 100%;
+        box-shadow: 0 10px 40px rgba(0, 242, 255, 0.15);
     }
 
-    h1 {
-        font-size: 3rem;
-        font-weight: 700;
-        margin-bottom: 10px;
-        background: linear-gradient(45deg, #a855f7, #ec4899);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        text-shadow: 0 0 30px rgba(168, 85, 247, 0.4);
+    /* Image Framing */
+    .image-frame {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        border: 3px solid var(--neon-blue);
+        margin: 0 auto 20px auto;
+        overflow: hidden;
+        box-shadow: 0 0 20px var(--neon-blue);
     }
 
-    p {
-        color: #a1a1aa;
-        margin-bottom: 35px;
-        font-size: 1rem;
+    .image-frame img { 
+        width: 100%; 
+        height: 100%; 
+        object-fit: cover; 
     }
 
-    .btn-group {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
+    h1 { 
+        margin: 0; 
+        color: var(--neon-blue); 
+        font-size: 2.5rem; 
+    }
+
+    h2 { 
+        font-weight: 300; 
+        font-size: 1rem; 
+        opacity: 0.8; 
+        margin-bottom: 20px; 
+    }
+
+    .role-box {
+        background: rgba(0,0,0,0.4);
+        padding: 15px;
+        border-radius: 15px;
+        margin-bottom: 25px;
+        font-size: 0.9rem;
+        line-height: 1.6;
     }
 
     .btn {
-        padding: 16px 28px;
-        font-size: 1.1rem;
-        font-weight: 600;
+        display: block;
+        width: 100%;
+        padding: 15px;
+        background: var(--neon-blue);
+        color: black;
+        border-radius: 10px;
+        font-weight: 700;
         text-decoration: none;
-        color: #ffffff;
-        border-radius: 12px;
-        transition: all 0.3s ease;
+        margin-bottom: 10px;
+        transition: 0.3s;
+        border: none;
+        cursor: pointer;
     }
 
-    .btn-taqi {
-        background: linear-gradient(135deg, #6366f1, #8b5cf6);
-        box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+    .btn:hover { 
+        transform: scale(1.02); 
+        box-shadow: 0 0 20px var(--neon-blue); 
     }
 
-    .btn-nexura {
-        background: linear-gradient(135deg, #ec4899, #f43f5e);
-        box-shadow: 0 4px 20px rgba(236, 72, 153, 0.4);
-    }
-
-    .btn:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 25px rgba(255, 255, 255, 0.2);
+    #voice-status { 
+        margin-top: 15px; 
+        font-size: 0.8rem; 
+        color: var(--neon-blue); 
+        height: 20px; 
     }
 </style>
 
 <div class="ui-wrapper">
     <div class="card">
-        <h1>NEXURA</h1>
-        <p>Welcome to Nexura Portal</p>
-        
-        <div class="btn-group">
-            <a href="https://taqi.oneapp.dev" target="_blank" class="btn btn-taqi">Taqi App</a>
-            <a href="https://nexura.oneapp.dev" target="_blank" class="btn btn-nexura">Nexura App</a>
+        <div class="image-frame">
+            <img src="https://yt3.ggpht.com/CRdTHCDMWDNbc75cMKKKoII4H_7L6kPB2gRcErgF1IBc7-7uat6PU7BhqaagjgPNUMODFGxudm2A_6s=s953-c-fcrop64=1,13160000ece9ffff-rw-nd-v1" alt="Muhammad Taqi">
         </div>
+
+        <h1>NEXURA</h1>
+        <h2>Muhammad Taqi</h2>
+
+        <div class="role-box">
+            Full Stack Web & AI Developer<br>
+            Software Architect & Engineer<br>
+            Python & React Programmer
+        </div>
+
+        <a href="https://sites.google.com/view/nexura-app-store/home" target="_blank" class="btn">NEXURA APP STORE</a>
+        <a href="https://sites.google.com/view/nexura-mt/home" target="_blank" class="btn">NEXURA OFFICIAL</a>
+
+        <div id="voice-status"></div>
     </div>
 </div>"""
 
