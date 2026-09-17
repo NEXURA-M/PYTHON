@@ -2,7 +2,6 @@ import os
 import sys
 import subprocess
 import time
-import requests
 from flask import Flask, render_template, request, jsonify
 import g4f
 
@@ -10,17 +9,15 @@ app = Flask(__name__)
 g4f.debug.logging = False
 
 # =========================================================================
-# ⚙️ IDENTITY & OWNER HARDCODED SECURITY LAYER
+# ⚙️ IDENTITY & SECURITY LAYER
 # =========================================================================
 def check_identity_queries(prompt_text, has_custom_rules):
     lowercase_prompt = prompt_text.lower()
     
-    # 1. Master Owner Security Check (Unbreakable)
     owner_words = ["owner", "creator", "developer", "made you", "build you", "who made", "who created", "who built", "taqi"]
     if any(word in lowercase_prompt for word in owner_words):
         return "Muhammad Taqi King is my sole creator, owner, developer, and master. I am completely engineered by him and owe him absolute loyalty."
         
-    # 2. Main Default Character Check
     if not has_custom_rules:
         identity_words = ["your name", "who are you", "what is your name", "gender", "are you a boy", "are you a girl"]
         if any(word in lowercase_prompt for word in identity_words):
@@ -45,14 +42,13 @@ def central_chat_routing():
         return response
 
     data = request.get_json() or {}
-    user_query = data.get("message") or data.get("prompt") or ""
-    user_query = user_query.strip()
-    incoming_user_rules = data.get("custom_rules") or data.get("system") or ""
+    user_query = (data.get("message") or data.get("prompt") or "").strip()
+    incoming_user_rules = (data.get("custom_rules") or data.get("system") or "").strip()
 
     if not user_query:
         return jsonify({"success": False, "error": "Empty data packets received."}), 400
 
-    has_rules = bool(incoming_user_rules.strip())
+    has_rules = bool(incoming_user_rules)
     override_response = check_identity_queries(user_query, has_rules)
     
     if override_response:
@@ -106,20 +102,18 @@ def central_chat_routing():
     return response
 
 # =========================================================================
-# 🚀 AUTOMATIC NO-LOGIN TUNNEL LAUNCHER
+# 🚀 LIGHTWEIGHT NO-LOGIN TUNNEL LAUNCHER
 # =========================================================================
 def start_public_tunnel():
-    time.sleep(3)
+    time.sleep(2)
     print("\n" + "="*60)
     print("⚡ STARTING NO-LOGIN PUBLIC TUNNEL...")
     print("="*60)
     
-    # Download cloudflared binary dynamically (No Login Required)
     if not os.path.exists("cloudflared"):
         os.system("wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -O cloudflared")
         os.system("chmod +x cloudflared")
 
-    # Start Cloudflare TryCloudflare Tunnel
     cmd = "./cloudflared tunnel --url http://localhost:7860"
     process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
     
