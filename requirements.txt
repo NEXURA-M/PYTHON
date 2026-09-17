@@ -1,3 +1,4 @@
-Flask
-requests
-g4f
+flask
+torch
+transformers
+accelerate
