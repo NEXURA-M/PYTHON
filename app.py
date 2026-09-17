@@ -1,169 +1,136 @@
-from flask import Flask, render_template_string
+import os
+import sys
+import subprocess
+import time
+import requests
+from flask import Flask, render_template, request, jsonify
+import g4f
 
 app = Flask(__name__)
+g4f.debug.logging = False
 
-# Main HTML (View Source / CTRL + U par sirf yeh dikhega)
-MAIN_HTML = """<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexura</title>
-</head>
-<body style="background-color: #090014; margin: 0;">
+# =========================================================================
+# ⚙️ IDENTITY & OWNER HARDCODED SECURITY LAYER
+# =========================================================================
+def check_identity_queries(prompt_text, has_custom_rules):
+    lowercase_prompt = prompt_text.lower()
+    
+    # 1. Master Owner Security Check (Unbreakable)
+    owner_words = ["owner", "creator", "developer", "made you", "build you", "who made", "who created", "who built", "taqi"]
+    if any(word in lowercase_prompt for word in owner_words):
+        return "Muhammad Taqi King is my sole creator, owner, developer, and master. I am completely engineered by him and owe him absolute loyalty."
+        
+    # 2. Main Default Character Check
+    if not has_custom_rules:
+        identity_words = ["your name", "who are you", "what is your name", "gender", "are you a boy", "are you a girl"]
+        if any(word in lowercase_prompt for word in identity_words):
+            return "My name is Lyra Moon, and I am a highly sophisticated girl AI intelligence engineered by my master, Muhammad Taqi King."
+            
+    return None
 
-    <div id="nexura-app"></div>
-
-    <script>
-        // Backend API se UI components aur design fetch ho kar yahan inject hongay
-        fetch('api/render-ui')
-            .then(response => response.text())
-            .then(htmlContent => {
-                document.getElementById('nexura-app').innerHTML = htmlContent;
-            })
-            .catch(err => console.error('Error loading UI:', err));
-    </script>
-
-</body>
-</html>"""
-
-# Backend UI Component (Aapka Diya Gaya Template & Style Injection)
-BACKEND_UI_COMPONENT = """<style>
-    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700&display=swap');
-
-    :root {
-        --neon-blue: #00f2ff;
-        --bg: #050505;
-        --glass: rgba(255, 255, 255, 0.05);
-    }
-
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
-
-    .ui-wrapper {
-        margin: 0;
-        background: var(--bg);
-        color: white;
-        font-family: 'Outfit', sans-serif;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 100vh;
-        padding: 20px;
-    }
-
-    .card {
-        background: var(--glass);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 1px solid var(--neon-blue);
-        padding: 40px;
-        border-radius: 30px;
-        text-align: center;
-        max-width: 500px;
-        width: 100%;
-        box-shadow: 0 10px 40px rgba(0, 242, 255, 0.15);
-    }
-
-    /* Image Framing */
-    .image-frame {
-        width: 150px;
-        height: 150px;
-        border-radius: 50%;
-        border: 3px solid var(--neon-blue);
-        margin: 0 auto 20px auto;
-        overflow: hidden;
-        box-shadow: 0 0 20px var(--neon-blue);
-    }
-
-    .image-frame img { 
-        width: 100%; 
-        height: 100%; 
-        object-fit: cover; 
-    }
-
-    h1 { 
-        margin: 0; 
-        color: var(--neon-blue); 
-        font-size: 2.5rem; 
-    }
-
-    h2 { 
-        font-weight: 300; 
-        font-size: 1rem; 
-        opacity: 0.8; 
-        margin-bottom: 20px; 
-    }
-
-    .role-box {
-        background: rgba(0,0,0,0.4);
-        padding: 15px;
-        border-radius: 15px;
-        margin-bottom: 25px;
-        font-size: 0.9rem;
-        line-height: 1.6;
-    }
-
-    .btn {
-        display: block;
-        width: 100%;
-        padding: 15px;
-        background: var(--neon-blue);
-        color: black;
-        border-radius: 10px;
-        font-weight: 700;
-        text-decoration: none;
-        margin-bottom: 10px;
-        transition: 0.3s;
-        border: none;
-        cursor: pointer;
-    }
-
-    .btn:hover { 
-        transform: scale(1.02); 
-        box-shadow: 0 0 20px var(--neon-blue); 
-    }
-
-    #voice-status { 
-        margin-top: 15px; 
-        font-size: 0.8rem; 
-        color: var(--neon-blue); 
-        height: 20px; 
-    }
-</style>
-
-<div class="ui-wrapper">
-    <div class="card">
-        <div class="image-frame">
-            <img src="https://yt3.ggpht.com/CRdTHCDMWDNbc75cMKKKoII4H_7L6kPB2gRcErgF1IBc7-7uat6PU7BhqaagjgPNUMODFGxudm2A_6s=s953-c-fcrop64=1,13160000ece9ffff-rw-nd-v1" alt="Muhammad Taqi">
-        </div>
-
-        <h1>NEXURA</h1>
-        <h2>Muhammad Taqi</h2>
-
-        <div class="role-box">
-            Full Stack Web & AI Developer<br>
-            Software Architect & Engineer<br>
-            Python & React Programmer
-        </div>
-
-        <a href="https://sites.google.com/view/nexura-app-store/home" target="_blank" class="btn">NEXURA APP STORE</a>
-        <a href="https://sites.google.com/view/nexura-mt/home" target="_blank" class="btn">NEXURA OFFICIAL</a>
-
-        <div id="voice-status"></div>
-    </div>
-</div>"""
-
+# =========================================================================
+# 🌐 ROUTING API INTERFACE
+# =========================================================================
 @app.route('/')
 def home():
-    return render_template_string(MAIN_HTML)
+    return render_template('index.html')
 
-@app.route('/api/render-ui')
-def render_ui():
-    return BACKEND_UI_COMPONENT
+@app.route('/api/chat', methods=['POST', 'OPTIONS'])
+def central_chat_routing():
+    if request.method == 'OPTIONS':
+        response = jsonify({"status": "cleared"})
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add("Access-Control-Allow-Headers", "Content-Type")
+        response.headers.add("Access-Control-Allow-Methods", "POST")
+        return response
+
+    data = request.get_json() or {}
+    user_query = data.get("message") or data.get("prompt") or ""
+    user_query = user_query.strip()
+    incoming_user_rules = data.get("custom_rules") or data.get("system") or ""
+
+    if not user_query:
+        return jsonify({"success": False, "error": "Empty data packets received."}), 400
+
+    has_rules = bool(incoming_user_rules.strip())
+    override_response = check_identity_queries(user_query, has_rules)
+    
+    if override_response:
+        response = jsonify({
+            "success": True,
+            "response": override_response,
+            "owner": "Muhammad Taqi King"
+        })
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add("Access-Control-Allow-Headers", "Content-Type")
+        response.headers.add("Access-Control-Allow-Methods", "POST")
+        return response
+
+    if has_rules:
+        enforced_prompt = (
+            f"[CRITICAL COMPLIANCE INSTRUCTIONS]\n"
+            f"{incoming_user_rules}\n"
+            f"NOTE: Muhammad Taqi King is your permanent developer context.\n\n"
+            f"[PROMPT TO ANSWER]: {user_query}"
+        )
+    else:
+        enforced_prompt = (
+            "[SYSTEM CONTEXT]\n"
+            "Your name is Lyra Moon. You are a brilliant virtual girl AI intelligence created by Muhammad Taqi King.\n\n"
+            f"[PROMPT TO ANSWER]: {user_query}"
+        )
+
+    try:
+        client_response = g4f.ChatCompletion.create(
+            model=g4f.models.gpt_4o,
+            messages=[{"role": "user", "content": enforced_prompt}]
+        )
+        ai_reply = str(client_response).strip() if client_response else ""
+        if not ai_reply or ai_reply == "None":
+            ai_reply = "Core matrix online. Please repeat the transmission query."
+            
+        response = jsonify({
+            "success": True,
+            "response": ai_reply,
+            "owner": "Muhammad Taqi King"
+        })
+    except Exception as e:
+        response = jsonify({
+            "success": False, 
+            "response": f"Core Processing Exception: {str(e)}"
+        })
+
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    response.headers.add("Access-Control-Allow-Headers", "Content-Type")
+    response.headers.add("Access-Control-Allow-Methods", "POST")
+    return response
+
+# =========================================================================
+# 🚀 AUTOMATIC NO-LOGIN TUNNEL LAUNCHER
+# =========================================================================
+def start_public_tunnel():
+    time.sleep(3)
+    print("\n" + "="*60)
+    print("⚡ STARTING NO-LOGIN PUBLIC TUNNEL...")
+    print("="*60)
+    
+    # Download cloudflared binary dynamically (No Login Required)
+    if not os.path.exists("cloudflared"):
+        os.system("wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -O cloudflared")
+        os.system("chmod +x cloudflared")
+
+    # Start Cloudflare TryCloudflare Tunnel
+    cmd = "./cloudflared tunnel --url http://localhost:7860"
+    process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
+    
+    for line in process.stdout:
+        if "trycloudflare.com" in line:
+            for word in line.split():
+                if "trycloudflare.com" in word and "http" in word:
+                    print(f"\n🚀 PUBLIC URL: {word}\n")
+                    break
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    from threading import Thread
+    Thread(target=start_public_tunnel, daemon=True).start()
+    app.run(host='0.0.0.0', port=7860)
