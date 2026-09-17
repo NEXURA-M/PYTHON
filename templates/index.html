@@ -3,78 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lyra Moon AI Matrix</title>
+    <title>TinyLlama Free AI Agent</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background: #0f172a; color: #f8fafc; height: 100vh; display: flex; justify-content: center; align-items: center; }
-        .chat-container { width: 90%; max-width: 800px; height: 85vh; background: #1e293b; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        .header { background: #0f172a; padding: 20px; text-align: center; border-bottom: 1px solid #334155; }
-        .header h1 { color: #38bdf8; font-size: 1.5rem; letter-spacing: 1px; }
-        .header p { color: #94a3b8; font-size: 0.85rem; margin-top: 4px; }
-        .chat-box { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
-        .message { padding: 12px 16px; border-radius: 8px; max-width: 80%; line-height: 1.5; word-wrap: break-word; }
-        .user-msg { background: #0284c7; align-self: flex-end; color: #fff; }
-        .bot-msg { background: #334155; align-self: flex-start; color: #f8fafc; }
-        .input-area { padding: 15px; background: #0f172a; display: flex; gap: 10px; }
-        input[type="text"] { flex: 1; padding: 12px; border-radius: 6px; border: 1px solid #334155; background: #1e293b; color: #fff; outline: none; }
-        input[type="text"]:focus { border-color: #0284c7; }
-        button { padding: 12px 24px; background: #0284c7; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: background 0.2s; }
-        button:hover { background: #0369a1; }
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0d1117; color: #c9d1d9; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .chat-container { width: 100%; max-width: 600px; height: 80vh; background: #161b22; border: 1px solid #30363d; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .chat-header { background: #21262d; padding: 15px 20px; border-bottom: 1px solid #30363d; text-align: center; }
+        .chat-header h2 { margin: 0; font-size: 1.2rem; color: #58a6ff; }
+        .chat-header p { margin: 5px 0 0; font-size: 0.8rem; color: #8b949e; }
+        .chat-box { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+        .message { padding: 12px 16px; border-radius: 8px; max-width: 85%; font-size: 0.95rem; line-height: 1.4; }
+        .user { background: #1f6feb; color: #ffffff; align-self: flex-end; border-bottom-right-radius: 2px; }
+        .bot { background: #21262d; color: #c9d1d9; align-self: flex-start; border: 1px solid #30363d; border-bottom-left-radius: 2px; }
+        .input-box { display: flex; gap: 10px; padding: 15px; background: #21262d; border-top: 1px solid #30363d; }
+        input { flex: 1; padding: 12px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: #fff; outline: none; }
+        input:focus { border-color: #58a6ff; }
+        button { padding: 12px 20px; background: #238636; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        button:hover { background: #2ea043; }
     </style>
 </head>
 <body>
     <div class="chat-container">
-        <div class="header">
-            <h1>LYRA MOON AI ENGINE</h1>
-            <p>Master Developer: Muhammad Taqi King</p>
+        <div class="chat-header">
+            <h2>TinyLlama 1.1B Assistant</h2>
+            <p>100% Free • No API Key • Offline Native Model</p>
         </div>
         <div class="chat-box" id="chatBox">
-            <div class="message bot-msg">Core matrix online. How may I assist you?</div>
+            <div class="message bot">Hello! I am TinyLlama running completely free. How can I help you?</div>
         </div>
-        <div class="input-area">
-            <input type="text" id="userInput" placeholder="Send transmission query..." onkeypress="handleKey(event)">
+        <div class="input-box">
+            <input type="text" id="userInput" placeholder="Type your message..." onkeypress="if(event.key==='Enter') sendMessage()">
             <button onclick="sendMessage()">Send</button>
         </div>
     </div>
 
     <script>
         async function sendMessage() {
-            const input = document.getElementById("userInput");
+            const inputField = document.getElementById("userInput");
             const chatBox = document.getElementById("chatBox");
-            const text = input.value.trim();
-            
-            if (!text) return;
+            const userText = inputField.value.trim();
 
-            const userDiv = document.createElement("div");
-            userDiv.className = "message user-msg";
-            userDiv.textContent = text;
-            chatBox.appendChild(userDiv);
+            if (!userText) return;
 
-            input.value = "";
+            chatBox.innerHTML += `<div class="message user">${userText}</div>`;
+            inputField.value = "";
             chatBox.scrollTop = chatBox.scrollHeight;
 
-            const loadingDiv = document.createElement("div");
-            loadingDiv.className = "message bot-msg";
-            loadingDiv.textContent = "Processing transmission...";
-            chatBox.appendChild(loadingDiv);
+            const loadingId = 'loading-' + Date.now();
+            chatBox.innerHTML += `<div class="message bot" id="${loadingId}">Thinking...</div>`;
             chatBox.scrollTop = chatBox.scrollHeight;
 
             try {
-                const response = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: text })
+                const response = await fetch("/generate", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ prompt: userText })
                 });
+
                 const data = await response.json();
-                loadingDiv.textContent = data.response || "No transmission received.";
+                document.getElementById(loadingId).innerText = data.response;
             } catch (err) {
-                loadingDiv.textContent = "Transmission Error.";
+                document.getElementById(loadingId).innerText = "Error generating response.";
             }
             chatBox.scrollTop = chatBox.scrollHeight;
-        }
-
-        function handleKey(e) { 
-            if (e.key === 'Enter') sendMessage(); 
         }
     </script>
 </body>
